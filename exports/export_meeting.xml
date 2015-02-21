@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+
+    <data noupdate="0">
+
+        <record id="export_meeting" model="ir.exports">
+            <field name="resource">project.project</field>
+            <field name="name">Meetings</field>
+        </record>
+
+        <record id="export_meeting_name" model="ir.exports.line">
+            <field name="export_id" ref="export_meeting"/>
+            <field name="name">name</field>
+        </record>
+
+        <record id="export_meeting_sc_start_date" model="ir.exports.line">
+            <field name="export_id" ref="export_meeting"/>
+            <field name="name">sc_start_date</field>
+        </record>
+
+        <record id="export_meeting_sc_end_date" model="ir.exports.line">
+            <field name="export_id" ref="export_meeting"/>
+            <field name="name">sc_end_date</field>
+        </record>
+
+    </data>
+
+</openerp>
+

@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+
+    <data noupdate="0">
+
+        <record model="ir.ui.view" id="sc_project_tree">
+            <field name="name">project.project.tree.inherited</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.view_project"/>
+            <field name="sequence" eval="15"/>
+            <field name="arch" type="xml">
+                <field name="name" position="after">
+                    <field name="sc_start_date"/>
+                    <field name="sc_kind"/>
+                    <field name="sc_estimate_revenews" groups="sistemacongressi_project.group_sistemacongressi_project_supervisor" sum="Total estimated revenues amount"/>
+                    <field name="sc_estimate_costs"  groups="sistemacongressi_project.group_sistemacongressi_project_supervisor" sum="Total estimated costs amount"/>
+                    <field name="sc_estimate_profit_percent" groups="sistemacongressi_project.group_sistemacongressi_project_supervisor" avg="Average estimated profit percent" widget="percent"/>
+                    <field name="sc_estimate_profit" groups="sistemacongressi_project.group_sistemacongressi_project_supervisor" sum="Total estimated profit amount"/>
+
+                    <field name="child_revenew_amount" groups="sistemacongressi_project.group_sistemacongressi_project_supervisor" sum="Total revenues amount"/> <!-- options="{'currency_field': 'currency_id'}"/-->
+                    <field name="child_cost_amount" groups="sistemacongressi_project.group_sistemacongressi_project_supervisor" sum="Total costs amount"/>
+                    <field name="child_profit_percent" groups="sistemacongressi_project.group_sistemacongressi_project_supervisor" widget="percent" avg="Average profit percent"/>
+                    <field name="child_profit_amount" groups="sistemacongressi_project.group_sistemacongressi_project_supervisor" sum="Total profit amount"/>
+
+                </field>
+                <field name="partner_id" position="replace">
+                    <field name="partner_id" string="Customer"/>
+                </field>
+                <field name="planned_hours" position="replace"/>
+                <field name="total_hours" position="replace"/>
+                <field name="effective_hours" position="replace"/>
+                <field name="progress_rate" position="replace"/>
+                <!--field name="state" position="replace"/-->
+            </field>
+        </record>
+
+        <record id="project.open_view_project_all" model="ir.actions.act_window">
+            <field name="view_mode">tree,kanban,form,gantt</field>
+            <field name="view_id" ref="sc_project_tree"/>
+        </record>
+
+        <record model="ir.ui.view" id="sc_project_form">
+            <field name="name">project.project.form.inherited</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.edit_project"/>
+            <field name="sequence" eval="15"/>
+            <field name="arch" type="xml">
+                <field name="user_id" position="before">
+                    <field name="sc_kind" required="1"/>
+                </field>
+
+                <xpath expr="//notebook/page[@string='Other Info']" position="before">
+                    <page string="Event Info" attrs="{'invisible': ['|', ('sc_kind', '=', 'OTHER'), ('sc_kind', '=', False)]}">
+                        <group colspan="2" string="Dates">
+                            <field name="sc_start_date"/>
+                            <field name="sc_end_date"/>
+                        </group>
+                        <group colspan="2" string="Participants">
+                            <field name="n_expected_pax"/>
+                            <field name="n_actual_pax"/>
+                        </group>
+                    </page>
+
+                    <page string="Meeting Info" attrs="{'invisible': ['&amp;', ('sc_kind', '!=', 'MEETING'), ('sc_kind', '!=', 'ECM')]}">
+                        <group colspan="2" string="Meeting Info">
+                            <field name="description"/>
+                            <field name="free_text_date"/>
+                            <field name="location"/>
+                            <field name="venue"/>
+                        </group>
+                        <group colspan="2" string="Activity Managers">
+                            <field name="registration_manager_id"/>
+                            <field name="sponsor_manager_id"/>
+                        </group>
+                        <group colspan="2" string="Contacts">
+                            <field name="scientific_contacts"/>
+                        </group>
+                        <group colspan="2" string="Features">
+                            <field name="is_gratis"/>
+                            <field name="has_accommodation"/>
+                            <field name="needs_website"/>
+                            <field name="has_website"/>
+                            <field name="website" widget="url"/>
+                        </group>
+                        <group colspan="2" string="AIFA">
+                            <field name="aifa_deadline"/>
+                        </group>
+                        <group colspan="2" string="Fiscal Survey">
+                            <field name="conference_area"/>
+                            <field name="conference_code"/>
+                            <field name="geographical_scope"/>
+                            <field name="fiscal_n_pax"/>
+                            <field name="fiscal_event_kind"/>
+                            <field name="fiscal_venue_kind"/>
+                            <field name="fiscal_pax_kind"/>
+                        </group>
+                    </page>
+
+                    <page string="ECM Info" attrs="{'invisible': [('sc_kind', '!=', 'ECM')]}">
+                        <group colspan="2" string="ECM features">
+                            <field name="ecm_provider_id"/>
+                            <field name="ecm_n_credits"/>
+                            <field name="ecm_categories"/>
+                            <field name="ecm_validation_deadline"/>
+                            <field name="ecm_validated"/>
+                            <field name="ecm_report_deadline"/>
+                            <field name="ecm_report_date"/>
+                            <field name="ecm_report_sending_date"/>
+                            <field name="ecm_certificate_sending_date"/>
+                            <field name="ecm_paid"/>
+                        </group>
+                    </page>
+
+                    <page string="Travel Info" attrs="{'invisible': [('sc_kind', '!=', 'TRAVEL')]}">
+                        <group colspan="2" string="Travel Info">
+                        </group>
+                    </page>
+                </xpath>
+
+                <xpath expr="//notebook/page[@string='Other Info']" position="after">
+                    <page string="Accounting">
+                        <group colspan="2" string="Estimates">
+                            <field name="sc_estimate_revenews" on_change="update_estimate_profit(sc_estimate_revenews,sc_estimate_costs)"/>
+                            <field name="sc_estimate_costs" on_change="update_estimate_profit(sc_estimate_revenews,sc_estimate_costs)"/>
+                            <field name="sc_estimate_profit_percent" widget="percent"/>
+                            <field name="sc_estimate_profit"/>
+                        </group>
+
+                        <group colspan="2" string="Final Balance">
+                            <field name="child_revenew_amount" widget="monetary"/> <!-- options="{'currency_field': 'currency_id'}"/-->
+                            <field name="child_cost_amount"/>
+                            <field name="child_profit_percent" widget="percent"/>
+                            <field name="child_profit_amount"/>
+                        </group>
+
+                        <group colspan="2" string="Budgets" groups="account.group_account_manager">
+                            <div>
+                                <field name="crossovered_budget_line" mode="tree">
+                                    <tree editable="bottom">
+                                        <field name="crossovered_budget_id" widget="selection"/>
+                                        <field name="general_budget_id" domain="[('account_id', '=', False)]"/>
+                                        <field name="date_from"/>
+                                        <field name="date_to"/>
+                                        <field name="planned_amount"/>
+                                    </tree>
+                                </field>
+                            </div>
+                        </group>
+
+                        <group colspan="2" string="Activities">
+                            <div>
+                                <field name="activity_ids" mode="tree" readonly="1">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="unit_amount" string="Duration" widget="float_time" sum="Total time"/>
+                                        <!--field name="amount" sum="Total amount"/-->
+                                        <field name="date"/>
+                                        <field name="user_id"/>
+                                    </tree>
+                                </field>
+                            </div>
+                        </group>
+
+                        <group colspan="2" string="Costs">
+                            <div>
+                                <field name="child_cost_ids" mode="tree" readonly="1">
+                                    <tree>
+                                        <field name="account_id"/>
+                                        <field name="general_account_id"/>
+                                        <field name="partner_id"/>
+                                        <field name="name"/>
+                                        <field name="date"/>
+                                        <field name="amount" sum="Total amount"/>
+                                    </tree>
+                                </field>
+                            </div>
+                        </group>
+
+                        <group colspan="2" string="Revenues">
+                            <div>
+                                <field name="child_revenew_ids" mode="tree" readonly="1" widget="one2many_list" context="{'group_by': 'account_id'}">
+                                    <tree>
+                                        <field name="account_id"/>
+                                        <field name="general_account_id"/>
+                                        <field name="partner_id"/>
+                                        <field name="name"/>
+                                        <field name="amount" sum="Total amount"/>
+                                        <field name="date"/>
+                                    </tree>
+                                </field>
+                            </div>
+                        </group>
+                    </page>
+                </xpath>
+
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="sc_meeting_tree">
+            <field name="name">sc.meeting.tree</field>
+            <field name="model">project.project</field>
+            <field name="arch" type="xml">
+                <tree string="Meetings">
+                    <field name="name" string="Name"/>
+                    <field name="sc_start_date"/>
+                    <field name="n_days"/>
+                    <field name="year" invisible="1"/>
+                    <field name="registration_manager_id"/>
+                    <field name="sponsor_manager_id"/>
+                    <field name="location"/>
+                    <field name="venue"/>
+                    <field name="n_expected_pax"/>
+                    <field name="n_actual_pax"/>
+                    <field name="is_gratis"/>
+                    <field name="has_accommodation"/>
+                    <field name="needs_website"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="sc_ecm_tree">
+            <field name="name">sc.ecm.tree</field>
+            <field name="model">project.project</field>
+            <field name="sequence" eval="17"/>
+            <field name="arch" type="xml">
+                <tree string="ECMs">
+                    <field name="name" string="Name"/>
+                    <field name="sc_start_date"/>
+                    <field name="n_days"/>
+                    <field name="year" invisible="1"/>
+                    <field name="registration_manager_id"/>
+                    <field name="sponsor_manager_id"/>
+                    <field name="location"/>
+                    <field name="venue"/>
+                    <field name="n_expected_pax"/>
+                    <field name="n_actual_pax"/>
+                    <field name="is_gratis"/>
+                    <field name="has_accommodation"/>
+                    <field name="needs_website"/>
+
+                    <field name="ecm_provider_id"/>
+                    <field name="ecm_n_credits"/>
+                    <field name="ecm_categories"/>
+<!--
+                    <field name="ecm_validation_deadline"/>
+                    <field name="ecm_validated"/>
+                    <field name="ecm_report_deadline"/>
+                    <field name="ecm_report_date"/>
+                    <field name="ecm_report_sending_date"/>
+                    <field name="ecm_certificate_sending_date"/>
+                    <field name="ecm_paid"/>
+-->
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="sc_travel_tree">
+            <field name="name">sc.travel.tree</field>
+            <field name="model">project.project</field>
+            <field name="arch" type="xml">
+                <tree string="Travels">
+                    <field name="name" string="Name"/>
+                    <field name="sc_start_date"/>
+                    <field name="n_days"/>
+                    <field name="year" invisible="1"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_project_project_filter" model="ir.ui.view">
+            <field name="name">project.project.select.inherited</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.view_project_project_filter"/>
+            <field name="arch" type="xml">
+                <xpath expr="//filter[@string='Member']" position="before">
+                    <separator/>
+                    <filter string="Meeting" name="Meeting" icon="terp-personal+" domain="[('sc_kind', '=', 'MEETING')]"/>
+                    <filter string="ECM" name="ECM" icon="terp-personal+" domain="[('sc_kind', '=', 'ECM')]"/>
+                    <filter string="Travel" name="Travel" icon="terp-personal+" domain="[('sc_kind', '=', 'TRAVEL')]"/>
+                    <filter string="Other" name="Other" icon="terp-personal+" domain="[('sc_kind', '=', 'OTHER')]"/>
+                    <separator/>
+                </xpath>
+                <xpath expr="//filter[@string='Member']" position="replace">
+                    <!-- Add "String" name attribute -->
+                    <filter string="Member" name="Member" icon="terp-personal+"
+                            domain="['|',('user_id', '=', uid),('members', '=', uid)]"
+                            help="Projects in which I am a member."/>
+                </xpath>
+                <xpath expr="//group[@string='Group By...']//filter[@string='Parent']" position="replace">
+                    <filter string="Kind" name="Kind" icon="terp-partner" domain="[]" context="{'group_by':'sc_kind'}"/>
+                    <filter string="Year" name="Year" icon="terp-partner" domain="[]" context="{'group_by':'year'}"/>
+                    <filter string="Registration Manager" name="Registration Manager" icon="terp-partner" domain="[]"
+                            context="{'group_by':'registration_manager_id'}"/>
+                    <filter string="Sponsor Manager" name="Sponsor Manager" icon="terp-partner" domain="[]"
+                            context="{'group_by':'sponsor_manager_id'}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="open_view_meetings">
+            <field name="name">Meetings</field>
+            <field name="res_model">project.project</field>
+            <field name="view_type">form</field>
+            <field name="domain">[('sc_kind', '=', 'MEETING')]</field>
+            <field name="view_mode">tree,form,gantt</field>
+            <field name="view_id" ref="sc_meeting_tree"/>
+            <field name="context">{'default_sc_kind': 'MEETING', 'search_default_Current': 1, 'search_default_Member': 1}</field>
+            <field name="search_view_id" ref="view_project_project_filter"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                  Click to start a new meeting.
+                </p><p>
+                  Meetings are projects with custom fields.
+                </p>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="open_view_ecms">
+            <field name="name">ECMs</field>
+            <field name="res_model">project.project</field>
+            <field name="view_type">form</field>
+            <field name="domain">[('sc_kind', '=', 'ECM')]</field>
+            <field name="view_mode">tree,form,gantt</field>
+            <field name="view_id" ref="sc_ecm_tree"/>
+            <field name="context">{'default_sc_kind': 'ECM', 'search_default_Current': 1, 'search_default_Member': 1}</field>
+            <field name="search_view_id" ref="view_project_project_filter"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                  Click to start a new ECM.
+                </p><p>
+                  ECMs are projects with custom fields.
+                </p>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="open_view_travels">
+            <field name="name">Travels</field>
+            <field name="res_model">project.project</field>
+            <field name="view_type">form</field>
+            <field name="domain">[('sc_kind', '=', 'TRAVEL')]</field>
+            <field name="view_mode">tree,form,gantt</field>
+            <field name="view_id" ref="sc_travel_tree"/>
+            <field name="context">{'default_sc_kind': 'TRAVEL', 'search_default_Current': 1, 'search_default_Member': 1}</field>
+            <field name="search_view_id" ref="view_project_project_filter"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                  Click to start a new travel.
+                </p><p>
+                  Travels are projects with custom fields.
+                </p>
+            </field>
+        </record>
+
+        <menuitem id="menu_meetings" name="Meetings" parent="project.menu_project_management" action="open_view_meetings" sequence="2"/>
+        <menuitem id="menu_ecms" name="ECMs" parent="project.menu_project_management" action="open_view_ecms" sequence="3"/>
+        <menuitem id="menu_travels" name="Travels" parent="project.menu_project_management" action="open_view_travels" sequence="4"/>
+
+    </data>
+
+</openerp>
+
