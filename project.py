@@ -160,7 +160,7 @@ class sc_analytic_account (osv.Model):
 
             for attr in ['child_revenew_amount', 'child_cost_amount', 'child_profit_percent', 'child_profit_amount']:
                 if res[account.id][attr] is not None:
-                    res[account.id][attr] = Decimal.from_float (res[account.id][attr]).quantize (Decimal('.01'))
+                    res[account.id][attr] = float (Decimal.from_float (res[account.id][attr]).quantize (Decimal('.01')))
 
         return res
 
